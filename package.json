@@ -7,7 +7,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test",
     "dev": "nodemon src/index.js"
   },
   "dependencies": {
@@ -28,6 +28,7 @@
     "@types/express": "^5.0.6",
     "@types/node": "^25.3.0",
     "nodemon": "^3.1.14",
+    "supertest": "^7.2.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }

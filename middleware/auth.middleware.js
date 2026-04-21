@@ -1,11 +1,14 @@
 // middleware/auth.middleware.js
 import { clerkClient } from "@clerk/express";
 import { prisma } from "../lib/prisma.js";
+import { sendError } from "../lib/http-response.js";
 
 export const requireAllowedEmail = async (req, res, next) => {
   try {
     const { userId } = await req.auth()
-    if (!userId) return res.status(401).json({ message: "Authorization error: no userId" });
+    if (!userId) {
+      return sendError(res, 401, "AUTH_NO_USER_ID", "Authorization error: no userId");
+    }
 
     const clerkUser = await clerkClient.users.getUser(userId);
     const email = clerkUser.emailAddresses[0].emailAddress;
@@ -27,7 +30,12 @@ export const requireAllowedEmail = async (req, res, next) => {
           allowed = await prisma.allowedUsers.findUnique({ where: { email } });
         } catch (retryErr) {
           console.error("Database reconnect failed:", retryErr.message);
-          return res.status(503).json({ message: "Database connection error. Please try again." });
+          return sendError(
+            res,
+            503,
+            "DB_UNAVAILABLE",
+            "Database connection error. Please try again."
+          );
         }
       } else {
         throw dbErr;
@@ -35,7 +43,7 @@ export const requireAllowedEmail = async (req, res, next) => {
     }
     
     if (!allowed) {
-      return res.status(403).json({ message: "Access denied. Email not allowed." });
+      return sendError(res, 403, "EMAIL_NOT_ALLOWED", "Access denied. Email not allowed.");
     }
 
     // Auto-create user in Prisma if needed
@@ -54,18 +62,18 @@ export const requireAllowedEmail = async (req, res, next) => {
     next();
   } catch (err) {
     console.error("Auth middleware error:", err);
-    res.status(500).json({ message: "Authorization error" });
+    return sendError(res, 500, "AUTHORIZATION_ERROR", "Authorization error");
   }
 };
 
 // Middleware to allow only organizers
 export const requireOrganizer = (req, res, next) => {
   if (!req.user) {
-    return res.status(401).json({ message: "User missing" });
+    return sendError(res, 401, "USER_MISSING", "User missing");
   }
 
   if (req.user.role !== "ORGANIZER") {
-    return res.status(403).json({ message: "Only organizers allowed" });
+    return sendError(res, 403, "ORGANIZER_REQUIRED", "Only organizers allowed");
   }
   
 

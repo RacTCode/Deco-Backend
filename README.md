@@ -101,6 +101,54 @@ After running migrations, seed the database with allowed users for authenticatio
 
 ------------------------------------------------------------------------
 
+# 6.1 Authentication Flow (Frontend + Backend)
+
+This backend expects **Clerk session tokens** on every API request.
+
+## End-to-end flow
+
+1. Frontend opens Clerk sign-in UI (email/password, magic link, or OTP based on Clerk config).
+2. User authenticates with Clerk.
+3. Frontend gets a Clerk session token and sends it in:
+
+```http
+Authorization: Bearer <clerk_session_token>
+```
+
+4. Backend validates token through `requireAuth()`.
+5. Backend loads Clerk user email and checks `AllowedUsers` table (`requireAllowedEmail`).
+6. If email is approved, backend creates/loads local `User` and stores it on `req.user`.
+7. Route-level role middleware (`requireOrganizer`) blocks organizer-only APIs.
+
+## What frontend should call after sign-in
+
+- `GET /api/auth/session`
+  - Any authenticated + approved user
+  - Returns local user profile + role for app bootstrap
+
+- `GET /api/auth/me`
+  - Organizer-only check
+  - Use this for organizer route guard if needed
+
+## Approval workflow endpoints (organizer only)
+
+- `GET /api/auth/allowed-users`
+  - List approved emails
+
+- `POST /api/auth/allowed-users`
+  - Body: `{ "email": "user@example.com" }`
+  - Approves an email
+
+- `DELETE /api/auth/allowed-users/:email`
+  - Revokes an approved email
+
+If a signed-in Clerk user is not approved, backend returns `403 Access denied. Email not allowed.`
+
+Detailed frontend integration contract:
+- `docs/frontend-auth-contract.md`
+
+------------------------------------------------------------------------
+
 ------------------------------------------------------------------------
 
 # 7. Running the Backend (Development)
