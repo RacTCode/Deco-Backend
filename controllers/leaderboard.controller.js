@@ -17,7 +17,12 @@ export const getLeaderboard = async (req, res) => {
       })
     }
 
-    const leaderboard = await Leaderboard.findOne().lean()
+    let leaderboard = await Leaderboard.findOne().lean()
+
+    if (!leaderboard && isFinished) {
+      await generateLeaderboard()
+      leaderboard = await Leaderboard.findOne().lean()
+    }
 
     if (!leaderboard) {
       return res.json({
