@@ -13,6 +13,7 @@ import authRoutes from "./routes/auth.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import limiter from "./middleware/ratelimiter.js";
 import { requireAuth } from "./middleware/auth.middleware.js";
+import { generateLeaderboard } from "./controllers/leaderboard.controller.js";
 
 dotenv.config();
 

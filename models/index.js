@@ -87,3 +87,21 @@ const roundResultSchema = new mongoose.Schema(
 // Unique: one result per user per round
 roundResultSchema.index({ userId: 1, roundId: 1 }, { unique: true });
 export const RoundResult = mongoose.model("RoundResult", roundResultSchema);
+
+// ─── Leaderboard ─────────────────────────────────────────────────────────────
+const leaderboardEntrySchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  name: String,
+  email: String,
+  avatar_url: String,
+  totalPoints: Number,
+  totalTime: Number,
+  rank: Number
+}, { _id: false })
+
+const leaderboardSchema = new mongoose.Schema({
+  entries: [leaderboardEntrySchema],
+  generatedAt: { type: Date, default: Date.now }
+})
+
+export const Leaderboard = mongoose.model("Leaderboard", leaderboardSchema)
