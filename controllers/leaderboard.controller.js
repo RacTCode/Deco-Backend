@@ -17,6 +17,7 @@ export const getLeaderboard = async (req, res) => {
       })
     }
 
+    // Get leaderboard or generate if not exists
     let leaderboard = await Leaderboard.findOne().lean()
 
     if (!leaderboard && isFinished) {
@@ -32,6 +33,7 @@ export const getLeaderboard = async (req, res) => {
       })
     }
     
+    // Pagination
     const page = Number(req.query.page) || 1
     const limit = Number(req.query.limit) || 20
 
@@ -49,6 +51,7 @@ export const getLeaderboard = async (req, res) => {
     })
 
   } catch (err) {
+    console.error('Get leaderboard error:', err)
     res.status(500).json({ status: false, message: err.message })
   }
 }
@@ -111,11 +114,9 @@ export const generateLeaderboard = async () => {
   }
 
   const saved = await Leaderboard.create({ entries: leaderboard })
-
+  console.log(`Leaderboard generated with ${leaderboard.length} entries`)
   return saved
 }
-
-// controllers/leaderboard.controller.js
 
 export const getMyRank = async (req, res) => {
   try {
@@ -142,8 +143,12 @@ export const getMyRank = async (req, res) => {
       })
     }
 
-    // Get leaderboard
-    const leaderboard = await Leaderboard.findOne().lean()
+    // Get or generate leaderboard
+    let leaderboard = await Leaderboard.findOne().lean()
+    if (!leaderboard && isFinished) {
+      await generateLeaderboard()
+      leaderboard = await Leaderboard.findOne().lean()
+    }
 
     if (!leaderboard) {
       return res.json({
@@ -196,10 +201,10 @@ export const getMyRank = async (req, res) => {
       avatar_url: userEntry.avatar_url,
       userId: userEntry.userId,
       totalParticipants: leaderboard.entries.length,
-      userPage: userPage,  // Which page the user is on
-      nearbyUsers: nearbyUsers,  // Optional: users around you
-      position: userIndex + 1,  // Exact position (1-indexed)
-      topPerformers: leaderboard.entries.slice(0, 3)  // Top 3 for reference
+      userPage: userPage,
+      nearbyUsers: nearbyUsers,
+      position: userIndex + 1,
+      topPerformers: leaderboard.entries.slice(0, 3)
     })
 
   } catch (err) {
