@@ -1,7 +1,7 @@
 // controllers/round.controller.js
 import { Round, RoundResult, Response } from "../models/index.js"
 import { findRoundByExternalId, resolveRoundObjectId, attachRoundNumericId, getNextRoundNumber, areAllRoundsFinished } from "../lib/round.utils.js"
-import { generateLeaderboard } from "./leaderboard.controller.js"
+
 
 // Get active round the user hasn't completed yet
 export const getActiveRound = async (req, res) => {
@@ -143,10 +143,6 @@ export const finishRound = async (req, res) => {
     await result.save()
 
     res.json({ message: "Round finished" })
-
-    if (areAllRoundsFinished()) {
-      generateLeaderboard();
-    }
 
   } catch (error) {
     return res.status(500).json({ message: "Server error" })

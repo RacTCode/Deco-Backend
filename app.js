@@ -14,6 +14,7 @@ import adminRoutes from "./routes/admin.routes.js";
 import limiter from "./middleware/ratelimiter.js";
 import { requireAuth } from "./middleware/auth.middleware.js";
 import { generateLeaderboard } from "./controllers/leaderboard.controller.js";
+import mongoose from "mongoose";
 
 dotenv.config();
 
@@ -47,6 +48,12 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Credentials", "true");
   if (req.method === "OPTIONS") return cors(corsOptions)(req, res, next);
   next();
+});
+
+// Health endpoint for load balancer and monitoring
+app.get("/health", (req, res) => {
+  const dbConnected = mongoose.connection.readyState === 1;
+  res.json({ status: "ok", dbConnected });
 });
 
 app.use(limiter);
