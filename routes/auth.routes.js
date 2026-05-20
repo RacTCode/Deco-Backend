@@ -96,9 +96,11 @@ router.get("/callback", async (req, res) => {
 
 // ─── GET /api/auth/me ─────────────────────────────────────────────────────────
 router.get("/me", requireAuth, (req, res) => {
+    const { email, ...safeUser } = req.user;
+    
     return res.status(200).json({
         message: "Backend connected successfully",
-        user: req.user,
+        user: safeUser,
     });
 });
 

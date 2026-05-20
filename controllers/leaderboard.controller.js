@@ -78,7 +78,7 @@ export const generateLeaderboard = async () => {
       map[uid] = {
         userId: uid,
         name: user.name,
-        email: user.email,
+        
         avatar_url: user.avatar_url,
         totalPoints: 0,
         totalTime: 0
@@ -114,7 +114,7 @@ export const generateLeaderboard = async () => {
   }
 
   const saved = await Leaderboard.create({ entries: leaderboard })
-  console.log(`Leaderboard generated with ${leaderboard.length} entries`)
+  
   return saved
 }
 
