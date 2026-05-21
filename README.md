@@ -820,6 +820,4 @@ Access is restricted to emails in the `AllowedUsers` collection.
 
 Users who are not registered cannot access any quiz endpoints.
 
----
 
-`Due to the majority of backend team's request here's an age old question -> Rishi kaha hai?`
