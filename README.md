@@ -4,236 +4,236 @@
 
 Make sure the following are installed on your system:
 
--   **Node.js** (v18 or newer recommended)
--   **npm** (comes with Node)
--   **Git**
--   **PostgreSQL** database (required for Prisma)
+- **Node.js** (v18 or newer recommended)
+- **npm** (comes with Node)
+- **Git**
+- **MongoDB** instance (local or Atlas)
+- A **Google Cloud project** with OAuth 2.0 credentials
 
 Check installations:
 
-``` bash
+```bash
 node -v
 npm -v
 git --version
-psql --version  # Check PostgreSQL
 ```
 
-------------------------------------------------------------------------
+---
 
-# 2. Clone the Repository
+## 2. Clone the Repository
 
-``` bash
-git clone <repository-url>
-cd deco-backend
-```
-
-Example:
-
-``` bash
+```bash
 git clone https://github.com/RacTCode/deco-backend.git
 cd deco-backend
 ```
 
-------------------------------------------------------------------------
+---
 
-# 3. Install Dependencies
+## 3. Install Dependencies
 
-Install all required packages:
-
-``` bash
+```bash
 npm install
 ```
-
-------------------------------------------------------------------------
-
-# 4. Environment Variables
-
-Create a `.env` file in the project root by copying `.exampleenv`:
-
-``` bash
-cp .exampleenv .env
-```
-
-Fill in the required values in `.env` 
-
-
-- Ensure your PostgreSQL database is running and accessible
-
-------------------------------------------------------------------------
-
-
-# 5. Prisma Setup
-
-Generate Prisma client:
-
-``` bash
-npx prisma generate
-```
-
-Run migrations (for development):
-
-``` bash
-npx prisma migrate dev --name init
-```
-
-For production deployments:
-
-``` bash
-npx prisma migrate deploy
-```
-
-**Note**: The project uses PostgreSQL. Ensure your DATABASE_URL points to a valid PostgreSQL instance.
-
-------------------------------------------------------------------------
-
-# 6. Database Seeding
-
-After running migrations, seed the database with allowed users for authentication:
-
-1. Open Prisma Studio:
-   ``` bash
-   npx prisma studio
-   ```
-
-2. Navigate to the `AllowedUsers` table
-3. Add email addresses of users who should have access to the backend
-4. Set roles in the `User` table if needed (default is PARTICIPANT, ORGANIZER for admins)
-
-------------------------------------------------------------------------
-
-------------------------------------------------------------------------
-
-# 7. Running the Backend (Development)
-
-Start the development server:
-
-``` bash
-npm run dev
-```
-
-or if the project uses a normal start script:
-
-``` bash
-npm start
-```
-
-Typical dev server runs at:
-
-    http://localhost:5000
-
-------------------------------------------------------------------------
-
-
-# 8. Deployment (Generic VPS / Cloud)
-
-Steps:
-
-1.  SSH into your server
-2.  Clone the repository
-3.  Install dependencies
-4.  Configure environment variables
-5.  Run Prisma migrations
-6.  Start the server
-
-Example:
-
-``` bash
-git clone <repo>
-cd backend
-npm install
-npx prisma generate
-npx prisma migrate deploy
-npm run build
-npm start
-```
-
-------------------------------------------------------------------------
-
-# 9. Troubleshooting
-
-### Prisma Client Errors
-
-Run:
-
-``` bash
-npx prisma generate
-```
-
-### Database Connection Issues
-
-Verify:
-
--   DATABASE_URL is correct
--   PostgreSQL server is running
--   Correct credentials and database exists
-
-### Port Already In Use
-
-Change port in `.env`:
-
-``` env
-PORT=5001
-```
-
-------------------------------------------------------------------------
-
-# 10. Project Structure
-
-    deco-backend/
-    │
-    ├── prisma/
-    │   ├── schema.prisma
-    │   └── migrations/
-    │
-    ├── controllers/
-    │   ├── round.controller.js
-    │   ├── question.controller.js
-    │   ├── response.controller.js
-    │   └── leaderboard.controller.js
-    │
-    ├── routes/
-    │   ├── round.routes.js
-    │   ├── question.routes.js
-    │   ├── response.routes.js
-    │   └── leaderboard.routes.js
-    │
-    ├── middleware/
-    │   ├── auth.middleware.js
-    │   ├── ratelimiter.js
-    │   └── validate.middleware.js
-    │
-    ├── schemas/
-    │   ├── round.schema.js
-    │   ├── question.schema.js
-    │   ├── response.schema.js
-    │   └── leaderboard.schema.js
-    │
-    ├── lib/
-    │   └── prisma.js
-    │
-    ├── app.js
-    ├── index.js
-    ├── package.json
-    ├── .env
-    └── .exampleenv
-
-------------------------------------------------------------------------
-
-# 11. Notes
-
--   Never commit `.env` files to version control.
--   Use environment variables for all secrets and configuration.
--   Always run Prisma migrations before starting the server in production.
--   Clerk authentication requires users to be whitelisted in the `AllowedUsers` table.
--   The backend uses role-based access: ORGANIZER for admin functions, PARTICIPANT for regular users.
--   Rate limiting is enabled by default (100 requests per 15 minutes per IP).
-
-------------------------------------------------------------------------
-------------------------------------------------------------------------
-# Backend API Documentation & Complete Event Lifecycle
 
 ---
 
+## 4. Environment Variables
+
+Create a `.env` file in the project root by copying `.exampleenv`:
+
+```bash
+cp .exampleenv .env
+```
+
+Fill in the required values:
+
+```env
+PORT=5000
+MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/deco
+
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
+
+SESSION_SECRET=your-session-secret
+CLIENT_URL=http://localhost:5173
+```
+
+---
+
+## 5. Google OAuth Setup
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project (or use an existing one)
+3. Navigate to **APIs & Services → Credentials**
+4. Click **Create Credentials → OAuth 2.0 Client ID**
+5. Set application type to **Web application**
+6. Add the following under **Authorized redirect URIs**:
+   - `http://localhost:5000/api/auth/google/callback` (development)
+   - `https://your-domain.com/api/auth/google/callback` (production)
+7. Copy the **Client ID** and **Client Secret** into your `.env`
+
+---
+
+## 6. MongoDB Setup
+
+**Local:**
+- Install and start MongoDB: `mongod --dbpath /data/db`
+- Set `MONGODB_URI=mongodb://localhost:27017/deco`
+
+**Atlas (recommended for production):**
+1. Create a free cluster at [mongodb.com/atlas](https://mongodb.com/atlas)
+2. Create a database user under **Database Access**
+3. Whitelist your IP under **Network Access**
+4. Copy the connection string into `MONGODB_URI`
+
+---
+
+## 7. Database Seeding (Allowed Users)
+
+After the server is running, seed the `AllowedUsers` collection with emails that should have access:
+
+You can do this via **MongoDB Compass**, the **Atlas UI**, or a quick script:
+
+```js
+// seed.js
+import mongoose from 'mongoose';
+import AllowedUser from './models/AllowedUser.js';
+
+await mongoose.connect(process.env.MONGODB_URI);
+
+await AllowedUser.insertMany([
+  { email: 'user@example.com' },
+  { email: 'admin@example.com' },
+]);
+
+console.log('Seeded allowed users');
+process.exit();
+```
+
+To set organizer role, update the `role` field on the relevant `User` document to `ORGANIZER` (default is `PARTICIPANT`).
+
+---
+
+## 8. Running the Backend (Development)
+
+```bash
+npm run dev
+```
+
+Server runs at: `http://localhost:5000`
+
+---
+
+## 9. Deployment (Generic VPS / Cloud)
+
+```bash
+git clone <repo>
+cd deco-backend
+npm install
+# Configure .env
+npm start
+```
+
+For production, use a process manager like **PM2**:
+
+```bash
+npm install -g pm2
+pm2 start index.js --name deco-backend
+pm2 save
+```
+
+Make sure your Google OAuth callback URL and `CLIENT_URL` in `.env` are updated to your production domain.
+
+---
+
+## 10. Troubleshooting
+
+### MongoDB Connection Error
+- Verify `MONGODB_URI` is correct
+- Check that your IP is whitelisted (Atlas) or `mongod` is running (local)
+
+### Google OAuth Redirect Mismatch
+- The redirect URI in `.env` must exactly match what's registered in Google Cloud Console
+- Include the protocol (`http`/`https`) and port if non-standard
+
+### Session Not Persisting
+- Ensure `SESSION_SECRET` is set
+- In production, confirm your cookie settings (`secure: true`, `sameSite`) match your deployment setup
+
+### Port Already In Use
+```env
+PORT=5001
+```
+
+---
+
+## 11. Project Structure
+
+```
+deco-backend/
+│
+├── models/
+│   ├── User.js
+│   ├── AllowedUser.js
+│   ├── Round.js
+│   ├── Question.js
+│   ├── Response.js
+│   └── RoundResult.js
+│
+├── controllers/
+│   ├── auth.controller.js
+│   ├── round.controller.js
+│   ├── question.controller.js
+│   ├── response.controller.js
+│   └── leaderboard.controller.js
+│
+├── routes/
+│   ├── auth.routes.js
+│   ├── round.routes.js
+│   ├── question.routes.js
+│   ├── response.routes.js
+│   └── leaderboard.routes.js
+│
+├── middleware/
+│   ├── auth.middleware.js
+│   ├── ratelimiter.js
+│   └── validate.middleware.js
+│
+├── schemas/
+│   ├── round.schema.js
+│   ├── question.schema.js
+│   ├── response.schema.js
+│   └── leaderboard.schema.js
+│
+├── lib/
+│   └── db.js
+│
+├── app.js
+├── index.js
+├── package.json
+├── .env
+└── .exampleenv
+```
+
+---
+
+## 12. Notes
+
+- Never commit `.env` files to version control.
+- Use environment variables for all secrets and configuration.
+- Google OAuth requires HTTPS in production — use a reverse proxy (Nginx, Caddy) or a platform like Railway/Render that provides it.
+- The backend uses role-based access: `ORGANIZER` for admin functions, `PARTICIPANT` for regular users.
+- Rate limiting is enabled by default (100 requests per 15 minutes per IP).
+- Session cookies are used for auth. Ensure `CLIENT_URL` is set correctly so CORS and cookie policies work.
+
+---
+
+---
+
+# Backend API Documentation & Complete Event Lifecycle
+
+---
 
 # 🧠 Core Architectural Principle
 
@@ -248,10 +248,102 @@ Every state transition is derived from:
 - Current **server time**
 
 Server time is the single source of truth.
-
 Frontend timers are visual only.
-
 Backend enforces all lifecycle constraints.
+
+---
+
+# 🔐 Authentication Routes
+
+**Base Path:** `/api/auth`
+
+---
+
+## Google OAuth Login
+
+Redirects the user to Google's OAuth consent screen.
+
+```
+GET /api/auth/google
+```
+
+---
+
+## Google OAuth Callback
+
+Google redirects here after the user grants access. The backend verifies the email against `AllowedUsers`, creates or retrieves the user, and establishes a session.
+
+```
+GET /api/auth/google/callback
+```
+
+**If allowed:** Redirects to `CLIENT_URL` (quiz dashboard)
+
+**If not allowed:**
+```
+Redirects to CLIENT_URL/not-registered
+```
+
+---
+
+## Get Current User
+
+Returns the authenticated user from the active session.
+
+```
+GET /api/auth/me
+```
+
+**Success (200)**
+```json
+{
+  "_id": "...",
+  "email": "user@example.com",
+  "name": "User Name",
+  "avatar_url": "https://...",
+  "role": "PARTICIPANT"
+}
+```
+
+**Not logged in (401)**
+```json
+{ "message": "Not authenticated" }
+```
+
+---
+
+## Check If User Is Allowed
+
+Checks whether the currently logged-in user's email is in the `AllowedUsers` list.
+
+```
+GET /api/auth/allowed
+```
+
+**Allowed (200)**
+```json
+{ "message": "Authorized" }
+```
+
+**Not allowed (403)**
+```json
+{ "message": "Access denied. Email not allowed." }
+```
+
+---
+
+## Logout
+
+Destroys the session and clears the cookie.
+
+```
+POST /api/auth/logout
+```
+
+**Success (200)**
+```json
+{ "message": "Logged out" }
+```
 
 ---
 
@@ -259,24 +351,24 @@ Backend enforces all lifecycle constraints.
 
 Each round contains:
 
-- `id`
+- `_id` (MongoDB ObjectId)
 - `startedAt`
 - `endsAt`
 
 Round state is derived dynamically:
 
 | Condition | Derived State |
-|------------|--------------|
+|---|---|
 | currentTime < startedAt | UPCOMING |
 | startedAt ≤ currentTime ≤ endsAt | ACTIVE |
 | currentTime > endsAt | COMPLETED |
 
-State is not stored.
-State is calculated.
+State is not stored. State is calculated.
 
 ---
 
 # 🔄 ROUND ROUTES
+
 **Base Path:** `/api/round`
 
 ---
@@ -285,128 +377,77 @@ State is calculated.
 
 Returns the currently ACTIVE round based on server time.
 
-### Endpoint
 ```
 GET /api/round/active
 ```
 
-### Success Response (200)
+**Success (200)**
 ```json
 {
-  "id": 1,
+  "_id": "664abc...",
   "startedAt": "2026-03-05T10:00:00.000Z",
   "endsAt": "2026-03-05T10:30:00.000Z"
 }
 ```
 
-### No Active Round (404)
+**No active round (404)**
 ```json
-{
-  "message": "No active round"
-}
+{ "message": "No active round" }
 ```
-
-### Backend Logic
-```
-WHERE startedAt <= now AND endsAt >= now
-```
-
-Only one active round is expected at a time.
 
 ---
 
 ## 2️⃣ Start Round (Participant)
 
-Registers that a specific user has started a round.
+Registers that the authenticated user has started a round.
 
-### Endpoint
 ```
 POST /api/round/:roundId/start
 ```
 
-### Preconditions
+**Preconditions**
 - Round exists
 - startedAt ≤ now ≤ endsAt
 - User has not started already
 
-### Success Response (200)
+**Success (200)**
 ```json
-{
-  "message": "Round started"
-}
+{ "message": "Round started" }
 ```
 
-### Error Responses
-
+**Errors**
 ```json
 { "message": "Round not found" }
-```
-
-```json
 { "message": "Round not active" }
-```
-
-```json
 { "message": "Round already started" }
 ```
-
-### What Backend Does
-- Creates row in `roundResult`
-- Stores:
-  - userId
-  - roundId
-  - startTime = now
-  - finished = false
 
 ---
 
 ## 3️⃣ Finish Round (Participant)
 
-Marks the round as completed for the user.
+Marks the round as completed for the authenticated user.
 
-### Endpoint
 ```
 POST /api/round/:roundId/finish
 ```
 
-### Preconditions
-- User has started round
-- Not already finished
-
-### Time Handling
-
-Effective finish time is:
+Effective finish time is capped at `round.endsAt`:
 
 ```
 effectiveEndTime = min(currentTime, round.endsAt)
+totalTime = effectiveEndTime - startTime
 ```
 
-Total time is:
-
-```
-effectiveEndTime - startTime
-```
-
-This prevents finishing after round ends.
-
-### Success Response (200)
+**Success (200)**
 ```json
-{
-  "message": "Round finished"
-}
+{ "message": "Round finished" }
 ```
 
-### Error Responses
-
+**Errors**
 ```json
 { "message": "Invalid finish request" }
-```
-
-```json
 { "message": "Round not found" }
-```
-
-```json
 { "message": "Round not started yet" }
 ```
 
@@ -414,14 +455,11 @@ This prevents finishing after round ends.
 
 ## 4️⃣ Create Round (Organizer)
 
-Creates a new round.
-
-### Endpoint
 ```
 POST /api/round
 ```
 
-### Request
+**Request**
 ```json
 {
   "startedAt": "2026-03-05T10:00:00.000Z",
@@ -429,15 +467,12 @@ POST /api/round
 }
 ```
 
-### Validation
-- endsAt > startedAt
-
-### Success (201)
+**Success (201)**
 ```json
 {
   "message": "Round created successfully",
   "round": {
-    "id": 1,
+    "_id": "664abc...",
     "startedAt": "...",
     "endsAt": "..."
   }
@@ -448,18 +483,15 @@ POST /api/round
 
 ## 5️⃣ Get All Rounds (Organizer)
 
-Returns rounds with computed state.
-
-### Endpoint
 ```
 GET /api/round/admin/all
 ```
 
-### Success Response
+**Success (200)**
 ```json
 [
   {
-    "id": 1,
+    "_id": "664abc...",
     "startedAt": "...",
     "endsAt": "...",
     "status": "ACTIVE",
@@ -469,145 +501,67 @@ GET /api/round/admin/all
   }
 ]
 ```
+
 ---
+
 ## 6️⃣ Get User Round Status
 
-Returns the participation status of the authenticated user for a specific round.
-
-This endpoint allows the frontend to determine whether the user has already
-started or finished the round. It is primarily used for **refresh recovery**
-and **game state restoration**.
-
----
-
-### Endpoint
+Returns whether the authenticated user has started or finished a round. Used for refresh recovery and game state restoration.
 
 ```
 GET /api/round/:id/status
 ```
 
----
-
-### Success Response (200)
-
-If the user **has not started the round**:
-
+**Success (200)**
 ```json
-{
-  "started": false,
-  "finished": false
-}
+{ "started": false, "finished": false }
+{ "started": true,  "finished": false }
+{ "started": true,  "finished": true  }
 ```
 
-If the user **has started but not finished**:
-
-```json
-{
-  "started": true,
-  "finished": false
-}
-```
-
-If the user **has already finished**:
-
-```json
-{
-  "started": true,
-  "finished": true
-}
-```
-
----
-
-
-### Typical Frontend Usage
-
-This endpoint is used to determine what screen the user should see.
-
-Example page load flow:
-
-```
-GET /api/round/active
-GET /api/round/:roundId/status
-```
-
-
-### Refresh Recovery Example
-
-If a user refreshes their browser during a round:
-
-1. Frontend checks the active round
-2. Frontend calls this endpoint
-3. If `started: true`, the frontend restores the round state
-
-Example recovery flow:
-
+**Refresh recovery flow:**
 ```
 GET /api/round/active
 GET /api/round/:roundId/status
 GET /api/question/round/:roundId
 GET /api/response/:roundId/me
 ```
+
 ---
 
 # ❓ QUESTION ROUTES
-**Base Path:** `/api/question`
 
-These endpoints allow organizers to manage questions for rounds and allow
-participants to retrieve questions during gameplay.
+**Base Path:** `/api/question`
 
 ---
 
-# 1️⃣ Create Question (Organizer)
+## 1️⃣ Create Question (Organizer)
 
-Creates a new question for a specific round.
-
-### Endpoint
 ```
 POST /api/question
 ```
 
-### Authentication
-Required. Organizer role only.
-
-```
-Authorization: Bearer <Clerk Session Token>
-```
-
-### Request Body
+**Request**
 ```json
 {
-  "roundId": 1,
+  "roundId": "664abc...",
   "text": "What is the capital of France?",
-  "options": {
-    "A": "Paris",
-    "B": "Berlin",
-    "C": "Madrid",
-    "D": "Rome"
-  },
+  "options": { "A": "Paris", "B": "Berlin", "C": "Madrid", "D": "Rome" },
   "answer": "A",
   "link": null,
   "reward": 10
 }
 ```
 
----
-
-### Success Response (201)
-
+**Success (201)**
 ```json
 {
   "status": true,
   "data": {
-    "id": 12,
-    "roundId": 1,
+    "_id": "664def...",
+    "roundId": "664abc...",
     "text": "What is the capital of France?",
-    "options": {
-      "A": "Paris",
-      "B": "Berlin",
-      "C": "Madrid",
-      "D": "Rome"
-    },
+    "options": { "A": "Paris", "B": "Berlin", "C": "Madrid", "D": "Rome" },
     "answer": "A",
     "link": null,
     "reward": 10
@@ -617,55 +571,22 @@ Authorization: Bearer <Clerk Session Token>
 
 ---
 
-### Error Responses
+## 2️⃣ Get Questions By Round
 
-Missing question text
-
-```json
-{
-  "status": false,
-  "message": "Question text is required"
-}
-```
-
-Server error
-
-```json
-{
-  "status": false,
-  "message": "Server error"
-}
-```
-
----
-
-# 2️⃣ Get Questions By Round
-
-Returns all questions belonging to a specific round.
-
-### Endpoint
 ```
 GET /api/question/round/:roundId
 ```
 
----
-
-### Success Response (200)
-
+**Success (200)**
 ```json
 {
   "status": true,
   "data": [
     {
-      "id": 1,
-      "roundId": 1,
+      "_id": "664def...",
+      "roundId": "664abc...",
       "text": "What is the capital of France?",
-      "options": {
-        "A": "Paris",
-        "B": "Berlin",
-        "C": "Madrid",
-        "D": "Rome"
-      },
+      "options": { "A": "Paris", "B": "Berlin", "C": "Madrid", "D": "Rome" },
       "link": null,
       "reward": 10
     }
@@ -675,125 +596,45 @@ GET /api/question/round/:roundId
 
 ---
 
-### Typical Frontend Usage
+## 3️⃣ Update Question (Organizer)
 
-This endpoint is called after a user starts a round.
-
-Example:
-
-```
-GET /api/question/round/1
-```
-
-The returned questions are displayed to the participant.
-
----
-
-# 3️⃣ Update Question (Organizer)
-
-Updates an existing question.
-
-### Endpoint
 ```
 PATCH /api/question/:id
 ```
 
-### Authentication
-Organizer only.
-
----
-
-### Request Body
-
-Any subset of these fields may be provided:
-
+**Request** (any subset of fields)
 ```json
 {
   "text": "Updated question text",
-  "options": {
-    "A": "Option 1",
-    "B": "Option 2"
-  },
+  "options": { "A": "Option 1", "B": "Option 2" },
   "answer": "A",
   "link": "https://example.com",
   "reward": 20
 }
 ```
 
----
-
-### Success Response (200)
-
+**Success (200)**
 ```json
-{
-  "status": true,
-  "data": {
-    "id": 1,
-    "roundId": 1,
-    "text": "Updated question text",
-    "options": {
-      "A": "Option 1",
-      "B": "Option 2"
-    },
-    "answer": "A",
-    "link": "https://example.com",
-    "reward": 20
-  }
-}
+{ "status": true, "data": { ... } }
 ```
 
 ---
 
-### Error Response
+## 4️⃣ Delete Question (Organizer)
 
-```json
-{
-  "status": false,
-  "message": "Server error"
-}
-```
-
----
-
-# 4️⃣ Delete Question (Organizer)
-
-Deletes a question permanently.
-
-### Endpoint
 ```
 DELETE /api/question/:id
 ```
 
-### Authentication
-Organizer only.
-
----
-
-### Success Response (200)
-
+**Success (200)**
 ```json
-{
-  "status": true,
-  "message": "Question deleted"
-}
+{ "status": true, "message": "Question deleted" }
 ```
 
 ---
-
-### Error Response
-
-```json
-{
-  "status": false,
-  "message": "Server error"
-}
-```
-
----
-
-
 
 # 📝 RESPONSE ROUTES
+
 **Base Path:** `/api/response`
 
 ---
@@ -804,21 +645,21 @@ Organizer only.
 POST /api/response
 ```
 
-### Request
+**Request**
 ```json
 {
-  "questionId": 1,
+  "questionId": "664def...",
   "submittedAnswer": "A"
 }
 ```
 
-### Backend Validation
+**Backend validation:**
 - Round is ACTIVE
 - User has started
 - currentTime ≤ endsAt
 - User not finished
 
-### Success Response
+**Success (200)**
 ```json
 {
   "message": "Saved",
@@ -827,43 +668,41 @@ POST /api/response
 }
 ```
 
-If after endsAt:
+**After endsAt:**
 ```json
 { "message": "Round already ended" }
 ```
+
 ---
+
 ## Get User Responses For Round
 
-Returns all answers submitted by the authenticated user for a specific round.
+Returns all answers submitted by the authenticated user for a specific round. Primarily used for state recovery on page refresh.
 
-This endpoint is primarily used for **state recovery**, allowing the frontend
-to restore previously submitted answers when the user refreshes the page or
-reopens the round.
-
-### Endpoint
 ```
 GET /api/response/:roundId/me
 ```
 
-### Request
+**Success (200)**
 ```json
 [
   {
-    "id": 21,
-    "questionId": 1,
+    "_id": "...",
+    "questionId": "664def...",
     "submittedAnswer": "A",
     "isCorrect": true,
     "pointsEarned": 10
   },
   {
-    "id": 22,
-    "questionId": 2,
+    "_id": "...",
+    "questionId": "664dff...",
     "submittedAnswer": "C",
     "isCorrect": false,
     "pointsEarned": 0
   }
 ]
 ```
+
 ---
 
 # 🏆 LEADERBOARD ROUTES
@@ -876,26 +715,23 @@ GET /api/response/:roundId/me
 GET /api/leaderboard
 ```
 
-Includes:
-- Only rounds where currentTime > endsAt
-- Only users who finished
+Includes only completed rounds (`currentTime > endsAt`) and only users who finished.
 
-Ranking Priority:
-1. Higher totalPoints
-2. Lower totalTime
-3. Competition ranking
+**Ranking priority:**
+1. Higher `totalPoints`
+2. Lower `totalTime`
 
-### Success Response
+**Success (200)**
 ```json
 {
   "status": true,
   "data": [
     {
       "rank": 1,
-      "userId": 12,
+      "userId": "...",
       "name": "User A",
       "email": "user@email.com",
-      "avatar_url": null,
+      "avatar_url": "https://...",
       "totalPoints": 100,
       "totalTime": 540
     }
@@ -905,192 +741,85 @@ Ranking Priority:
 
 ---
 
-# 🔁 COMPLETE EVENT FLOW (DETAILED)
-
-There are two synchronized but independent systems:
+# 🔁 COMPLETE EVENT FLOW
 
 ---
 
-# 🏛 GLOBAL ROUND LIFECYCLE (Server Controlled)
+## 🏛 Global Round Lifecycle (Server Controlled)
 
 1. Organizer creates round.
-2. Until startedAt → Round is UPCOMING.
-3. At startedAt → Automatically becomes ACTIVE.
-4. At endsAt → Automatically becomes COMPLETED.
+2. Until `startedAt` → Round is UPCOMING.
+3. At `startedAt` → Automatically becomes ACTIVE.
+4. At `endsAt` → Automatically becomes COMPLETED.
 5. No API call required for state change.
 6. Server determines state at every request.
 
-No frontend trigger required.
-
 ---
 
-# 👤 USER PARTICIPATION LIFECYCLE
+## 👤 User Participation Lifecycle
 
-## Step 1: Page Load
+**Step 1: Sign In**
+User is redirected to `GET /api/auth/google` → Google consent → callback → session established.
 
-Frontend calls:
+**Step 2: Page Load**
 ```
-GET /api/round/active
+GET /api/auth/me       → confirm session
+GET /api/auth/allowed  → confirm access
+GET /api/round/active  → check for active round
 ```
 
-If 200:
-- Store startedAt
-- Store endsAt
-- Start countdown UI
-
-If 404:
-- Show waiting state
-- Poll periodically
-
----
-
-## Step 2: User Auto-Start
-
-If:
-- Active round exists
-- User has not started
-
-Frontend calls:
+**Step 3: Start Round**
 ```
 POST /api/round/:roundId/start
 ```
 
-Backend validates time window.
-
----
-
-## Step 3: Question Interaction
-
-Frontend fetches:
+**Step 4: Answer Questions**
 ```
 GET /api/question/round/:roundId
+POST /api/response  (per answer)
 ```
 
-Answers submitted via:
-```
-POST /api/response
-```
-
-Each submission revalidated server-side.
-
----
-
-## Step 4: Auto Finish
-
-At earliest of:
-- User clicks finish
-- currentTime ≥ endsAt
-
-Frontend calls:
+**Step 5: Finish Round**
 ```
 POST /api/round/:roundId/finish
 ```
 
-Backend caps time automatically.
-
 ---
 
-# 🔄 REFRESH HANDLING
+## 🔄 Refresh Handling
 
-On refresh:
-
-Frontend must:
+On refresh, the frontend must:
 1. Re-fetch active round
-2. Check if user already started
-3. Recompute remaining time:
-   ```
-   endsAt - currentServerTime
-   ```
+2. Check if user already started via `/api/round/:id/status`
+3. Recompute remaining time: `endsAt - currentServerTime`
 
-Never trust client clock.
+Never trust the client clock.
 
 ---
 
-# ⚠️ EDGE CASES HANDLED
+## ⚠️ Edge Cases Handled
 
-- User tries to start after endsAt → Rejected
+- User tries to start after `endsAt` → Rejected
 - User tries to submit after finish → Rejected
-- User tries to submit after endsAt → Rejected
+- User tries to submit after `endsAt` → Rejected
 - User refreshes at 1 second left → Time enforced by server
-- User finishes after endsAt → Time capped automatically
-
----
-# 🔐 Allowed Users Access Control
-
-The platform restricts quiz access to a predefined list of allowed email addresses.
-
-Only users whose email exists in the **AllowedUsers** database table are permitted
-to access the quiz system.
-
-All other users are blocked from participation.
+- User finishes after `endsAt` → Time capped automatically
 
 ---
 
+# 🔐 Access Control
 
-# 🚦 Access Flow
+Access is restricted to emails in the `AllowedUsers` collection.
 
-After a user logs in through Clerk authentication, the backend performs
-an authorization check against the whitelist.
+**Flow:**
+1. User signs in via Google OAuth.
+2. Backend retrieves their email from the Google profile.
+3. Backend checks `AllowedUsers` for that email.
+4. If found → user record created/retrieved, session established, redirected to quiz.
+5. If not found → **403**, redirected to "Not Registered" page.
 
-### Authentication Sequence
-
-1. User signs in using Clerk.
-2. Backend retrieves the authenticated user's email from Clerk.
-3. Backend checks if the email exists in the `AllowedUsers` table.
-4. Access decision is made based on the result.
-
----
-
-# ✅ Allowed User Flow
-
-If the email **exists in the whitelist**:
-
-1. Backend allows the request.
-2. Backend ensures a corresponding `User` record exists.
-3. If the user does not exist yet, it is automatically created.
-4. The user is redirected to the **quiz platform**.
-
-Example backend result:
-
-```json
-{
-  "message": "Authorized"
-}
-```
-
-Frontend behavior:
-```
-Redirect user to quiz dashboard
-```
+Users who are not registered cannot access any quiz endpoints.
 
 ---
 
-# ❌ Not Allowed User Flow
-
-If the email **does not exist in the whitelist**:
-
-The backend rejects the request.
-
-### Response
-
-HTTP Status: **403**
-
-```json
-{
-  "message": "Access denied. Email not allowed."
-}
-```
-
-Frontend behavior:
-```
-Redirect user to "Not Registered" page
-Display message:
-"You are not registered for this quiz event."
-```
-
-Users who are not registered **cannot access any quiz endpoints**.
-
----
-
-`Due to the majority of backend team's request here's an age old question ->  
-Rishi kaha hai?`
+`Due to the majority of backend team's request here's an age old question -> Rishi kaha hai?`
